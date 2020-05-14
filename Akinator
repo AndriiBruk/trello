@@ -1,0 +1,207 @@
+public class Akinator2 {
+    public static WebDriver driver;
+
+    public static void main(String[] args) throws InterruptedException, NoSuchElementException {
+        initiateGame();
+        answerQuestions();
+        confirmYourHero();
+    }
+
+    private static void clickCss(String selector) {
+        driver.findElement(By.cssSelector(selector)).click();
+    }
+    private static String textCss(String selector) {
+        return driver.findElement(By.cssSelector(selector)).getText();
+    }
+
+    //    Потрібно зрозуміти різницю між вибором по cssSelector-y i xpath і вибрати краще.
+    //    Різниця між implicitlyWait & sleep. Розібратися що коли краще використовувати для економії часу на проходження
+    public static void initiateGame() {
+        System.setProperty("webdriver.chrome.driver", "src/test/resources/chromedriver");
+
+        driver = new ChromeDriver();
+        driver.manage().window().maximize();
+        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+        driver.get("https://ru.akinator.com");
+        clickCss("a[href='/game']");
+    }
+
+    public static void endGame() {
+        driver.quit();
+    }
+
+    public static void showFiveOptions() {
+        System.out.println("Варианты ответа:");
+
+        System.out.println(textCss("a[id='a_yes']") + " - 1");
+        System.out.println(textCss("a[id='a_no']") + " - 2");
+        System.out.println(textCss("a[id='a_dont_know']") + " - 3");
+        System.out.println(textCss("a[id='a_probably']") + " - 4");
+        System.out.println(textCss("a[id='a_probaly_not']") + " - 5");
+        try {
+            System.out.println(textCss("span[class='back-button-text']") + " - 6");
+        } catch (Exception e){
+            System.out.print("");
+        }
+    }
+
+    public static int showTwoOptions() {
+        System.out.println("--------------------");
+        System.out.println("| Да - 1 | Нет - 2 |");
+        System.out.println("--------------------");
+
+        Scanner scanner = new Scanner(System.in);
+        int option = scanner.nextInt();
+
+        switch (option) {
+            case 1:
+                return 1;
+            case 2:
+                return 2;
+            default:
+                System.out.println("Этого варианта не существует. Попробуйте еще раз. Спасибо!");
+                showTwoOptions();
+        }
+        return 0;
+    }
+
+    public static void answerQuestions() throws InterruptedException, NoSuchElementException {
+        TimeUnit.SECONDS.sleep(5);
+        while (isElementPresent()) {
+            System.out.println(driver.findElement(By.xpath("//p[@class='question-text']")).getText());
+
+            showFiveOptions();
+            chooseYourOption();
+            TimeUnit.SECONDS.sleep(5);
+        }
+    }
+
+    public static boolean isElementPresent() {
+        try {
+            driver.findElement(By.xpath("//p[@class='question-text']"));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static void chooseYourOption() {
+        Scanner scanner = new Scanner(System.in);
+        int option = scanner.nextInt();
+
+        switch (option) {
+            case 1:
+                clickCss("a[id='a_yes']");
+                break;
+            case 2:
+                clickCss("a[id='a_no']");
+                break;
+            case 3:
+                clickCss("a[id='a_dont_know']");
+                break;
+            case 4:
+                clickCss("a[id='a_probably']");
+                break;
+            case 5:
+                clickCss("a[id='a_probaly_not']");
+                break;
+            case 6:
+                clickCss("a[id='a_cancel_answer']");
+                break;
+            default:
+                System.out.println("Этого варианта не существует. Попробуйте еще раз. Спасибо!");
+                chooseYourOption();
+        }
+    }
+
+    public static void confirmYourHero() throws InterruptedException, NoSuchElementException {
+        if (!driver.findElement(By.xpath("//span[@class='proposal-title']")).isEnabled()) {
+            System.out.println("Извините произошла ошибка. Попробуйте еще раз!");
+            return;
+        } else {
+            String answer = driver.findElement(By.xpath("//span[@class='proposal-title']")).getText() + " (" +
+                    driver.findElement(By.xpath("//span[@class='proposal-subtitle']")).getText() + ")";
+
+            System.out.println("Я думаю это: " + answer);
+        }
+
+        confirmProposal();
+    }
+
+    public static void confirmProposal() throws InterruptedException, NoSuchElementException {
+        if (showTwoOptions() == 1) {
+            clickCss("a[id='a_propose_yes']");
+            System.out.println(driver.findElement(By.xpath("//div[@class='bubble-standard bubble-win bubble']")).getText());
+            endGame();
+        } else {
+            clickCss("a[id='a_propose_no']");
+            continueGame();
+        }
+    }
+
+    public static void continueGame() throws InterruptedException, NoSuchElementException{
+        System.out.println(driver.findElement(By.xpath("//span[@class='proposal-title']")).getText());
+        if (showTwoOptions() == 1) {
+            clickCss("a[id='a_continue_yes']");
+            answerQuestions();
+            confirmYourHero();
+        } else {
+            clickCss("a[id='a_continue_no']");
+            enterYourHero();
+        }
+    }
+
+    public static void enterYourHero() throws InterruptedException {
+
+        soundLike3();
+        soundLike2();
+
+        System.out.println(driver.findElement(By.xpath("//span[@class='win-sentence']")).getText());
+        endGame();
+
+    }
+
+    public static void soundLike3() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(5);
+
+        try {
+            driver.findElement(By.xpath("//input[@id='not_in_list']")).click();
+            TimeUnit.SECONDS.sleep(5);
+        } catch (Exception e) {
+        }
+
+        System.out.println(driver.findElement(By.xpath("//div[@class='col-md-12 page-formulaire soundlike3']")).getText());
+
+        Scanner scanner = new Scanner(System.in);
+        String value = scanner.nextLine();
+
+        driver.findElement(By.cssSelector("input[name='name']")).sendKeys(value + Keys.ENTER);
+    }
+
+    public static void soundLike2() throws InterruptedException {
+        TimeUnit.SECONDS.sleep(5);
+
+        try {
+            driver.findElement(By.xpath("//input[@id='show_add_perso']")).click();
+            TimeUnit.SECONDS.sleep(7);
+        } catch (Exception e) {
+        }
+
+        System.out.println(driver.findElement(By.xpath("//div[@class='col-md-12 page-formulaire aki-formulaire soundlike2']")).getText());
+        System.out.println("Имя:");
+
+        Scanner scanner = new Scanner(System.in);
+        String value = scanner.nextLine();
+
+        driver.findElement(By.cssSelector("input[name='name']")).sendKeys(value);
+
+
+        System.out.println("Описание:");
+        String desc = scanner.nextLine();
+        scanner.close();
+        driver.findElement(By.cssSelector("input[name='desc']")).sendKeys(desc);
+
+        clickCss("input[id='add_perso']");
+    }
+
+}
