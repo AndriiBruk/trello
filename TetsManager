@@ -1,0 +1,36 @@
+
+public class TestManager {
+    public static WebDriver driver;
+    public String boardTitle = "Board";
+    public String listTitle = "It's List";
+    public String cardTitle = "Card";
+    public String attachmentLink ="https://cdn.studydive.com/imgs/course/3269/10c88af2cbacd92be59d3fefe8081f79.png";
+
+    @BeforeClass ()
+    public static void setUp(){
+        System.setProperty("webdriver.chrome.driver", "src/main/resources/chromedriverNew.exe");
+        driver = new ChromeDriver();
+        SetUpPages setUpPages = new SetUpPages(driver);
+        driver.get(setUpPages.url);
+        driver.manage().timeouts().implicitlyWait(10000, TimeUnit.MILLISECONDS);
+        setUpPages.loginLink.click();
+        setUpPages.emailField.sendKeys("fstyle.hu@gmail.com");
+        sleep(1);
+        setUpPages.login.click();
+        setUpPages.passwordField.sendKeys("aBc123654789" + Keys.ENTER);
+        Assert.assertTrue(driver.findElement(By.cssSelector("button[class='_2ZNy4w8Nfa58d1 js-open-header-member-menu _3R2LYccoXhpfv9']")).isEnabled());
+    }
+
+    public static WebDriver getDriver(){
+        return driver;
+    }
+
+    public static void sleep(int sec){
+        try {
+            TimeUnit.SECONDS.sleep(sec);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+}
